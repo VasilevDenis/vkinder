@@ -38,3 +38,10 @@ class ViewedUser(Base):
 
     def __repr__(self) -> str:
         return f"Viewed user(id={self.id!r}, vk_id={self.vk_id!r})"
+
+
+class Unnecessary(Base):
+    __tablename__ = "unnecessary"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
