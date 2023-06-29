@@ -13,11 +13,11 @@ def event():
     if request_data:
         if request_data['secret'] == constants.SECRET_KEY:
             if request_data['type'] == 'message_new':
-                message_data = request_data['object']
-                user_id = message_data['user_id']
-                message = message_data['body']
+                message_data = request_data['object']['message']
+                user_id = message_data['from_id']
+                message = message_data['text']
                 m_handler.response(user_id, message)
-                return 'ok'
+    return 'ok'
 
 
 if __name__ == "__main__":
