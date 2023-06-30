@@ -14,6 +14,7 @@ def event():
         if request_data['secret'] == constants.SECRET_KEY:
             if request_data['type'] == 'message_new':
                 message_data = request_data['object']['message']
+                client_info = request_data['object']['client_info']
                 user_id = message_data['from_id']
                 message = message_data['text']
                 m_handler.response(user_id, message)
@@ -22,4 +23,3 @@ def event():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
-
