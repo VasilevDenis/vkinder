@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 
 @app.route('/', methods=['GET', 'POST'])
-def event():
+def event() -> str:
     new_handler = handler.Handler(request)
     new_handler.handle()
     return 'ok'
