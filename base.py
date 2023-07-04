@@ -1,6 +1,8 @@
 class Base:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, app, db, user) -> None:
+        self.app = app
+        self.db = db
+        self.user = user
 
     def is_unrated_user_exists(self) -> bool:
         """
@@ -16,15 +18,13 @@ class Base:
         """
         :return: unrated user id from base or None
         """
-        pass
+        user = self.db.session.execute(self.db.select(self.user).where(self.user.like is None)).scalars()
+        print(user)
 
     def delete_unrated_user(self) -> None:
         """
         Deletes record in the base, where viewed_user_id == None
         """
-
-    def get_unrated_users(self, users: list) -> list:
-        pass
 
     def add_user(self, user_id: int, unrated_user: int) -> None:
         pass
@@ -33,5 +33,6 @@ class Base:
         pass
 
     def get_favorites_users(self) -> list or None:
-        pass
+        print('Returnin favorites')
+        return [1, 2, 3, 4]
 

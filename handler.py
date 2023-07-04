@@ -5,9 +5,9 @@ import receiver
 
 
 class Handler:
-    def __init__(self, request) -> None:
+    def __init__(self, request, app, db, user) -> None:
         self.api = api.API()
-        self.base = base.Base()
+        self.base = base.Base(app, db, user)
         received_json = request.get_json()
         self.received = receiver.Receiver(received_json)
 
@@ -45,7 +45,7 @@ class Handler:
 
     def favorites_users(self) -> None:
         favorites_users = self.base.get_favorites_users()
-        self.api.send_favorites_users(favorites_users)
+        self.api.send_favorites_users(self.received, favorites_users)
 
     def wrong_command(self) -> None:
         pass
