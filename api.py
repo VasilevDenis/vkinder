@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 import requests
 import time
 import constants
@@ -10,40 +11,26 @@ class API:
         self.base_url = 'https://api.vk.com/method/'
         self.params = {"v": constants.API_VERSION, "access_token": constants.TOKEN}
 
-    def back(self, received):
-        method = 'messages.send'
-        params = self._interface_params('Back!',
-                                        self.like_dislike_favorites_keyboard(), received)
-        self._get(method, params)
-
-    def like(self, received):
-        method = 'messages.send'
-        params = self._interface_params('Like!',
-                                        self.like_dislike_favorites_keyboard(), received)
-        self._get(method, params)
-
-    def dislike(self, received):
-        method = 'messages.send'
-        params = self._interface_params('Dislike!',
-                                        self.like_dislike_favorites_keyboard(), received)
-        self._get(method, params)
-
-    def favorites_users(self, received):
+    def send_favorites_users(self, received, favorites_users) -> None:
         method = 'messages.send'
         params = self._interface_params('Favorites!',
                                         self.start_keyboard(), received)
-        self._get(method, params)
+        self._vk_request(method, params)
 
-    def wrong_command(self, received):
+    def wrong_command(self, received) -> None:
         method = 'messages.send'
-        if received.text == 'Back':
-            return
-        params = self._interface_params(f'{received.text} - is wrong command!',
+        params = self._interface_params(f'Wrong command!',
                                         self.like_dislike_favorites_keyboard(), received)
-        print(self._get(method, params))
+        self._vk_request(method, params)
+
+    def get_users(self) -> list:
+        pass
+
+    def send_user_info(self) -> None:
+        pass
 
     @staticmethod
-    def _interface_params(message, keyboard, received):
+    def _interface_params(message, keyboard, received) -> dict:
         params = {'random_id': random.randint(100000, 999999),
                   'message': message,
                   'keyboard': keyboard,
@@ -51,18 +38,8 @@ class API:
                   }
         return params
 
-    def _get(self, method, params=None):
-        if params is not None:
-            params.update(self.params)
-        else:
-            params = self.params
-        url = self.base_url + method
-        request_obj = requests.post(url=url, params=params)
-        time.sleep(0.1)
-        return request_obj.json()
-
     @staticmethod
-    def like_dislike_favorites_keyboard():
+    def like_dislike_favorites_keyboard() -> dict:
         keyboard = VkKeyboard(one_time=False)
         keyboard.add_button(label='Favorites', color=VkKeyboardColor.PRIMARY)
         keyboard.add_line()
@@ -71,8 +48,59 @@ class API:
         return keyboard.get_keyboard()
 
     @staticmethod
-    def start_keyboard():
+    def start_keyboard() -> dict:
         keyboard = VkKeyboard(one_time=False)
         keyboard.add_button(label='Back', color=VkKeyboardColor.PRIMARY)
         return keyboard.get_keyboard()
+
+    def get_user_info(self, user_id: int) -> list or None:
+        # по vk id выдает список: [имя, фамилия, возраст, пол, город]
+        method = 'users.get'
+        params = {'user_id': user_id,
+                  'fields': 'bdate, city, sex'}
+        r = self._vk_request(method, params)
+        user_info = r['response'][0]
+        if 'city' in user_info:
+            city = user_info['city']['title']
+        else:
+            return None
+        first_name = user_info['first_name']
+        last_name = user_info['last_name']
+        age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])
+        gender = user_info['sex']
+        member_info = [first_name, last_name, age, gender, city]
+        return member_info
+
+    def get_photos(self, user_id: int) -> None or dict:
+        # по vk id выдает список с 3 фото размера Х с макс.кол-вом лайков
+        method = 'photos.get'
+        params = {'owner_id': user_id,
+                  'album_id': 'profile',
+                  'extended': 1,
+                  'access_token': constants.APP_TOKEN
+                  }
+        r = self._vk_request(method, params)
+        photos = {}
+        for item in r['response']['items']:
+            likes = item['likes']['count']
+            url = None
+            for photo in item['sizes']:
+                if photo['type'] == 'x':
+                    url = photo['url']
+            photos[url] = likes
+        photos = dict(sorted(photos.items(), key=lambda item: item[1], reverse=True))
+        return list(photos.keys())[:3]
+
+    def _vk_request(self, method, params=None) -> dict:
+        self.params.update(params)
+        url = self.base_url + method
+        request_obj = requests.get(url=url, params=self.params)
+        time.sleep(0.3)
+        return request_obj.json()
+
+
+
+
+
+
 
