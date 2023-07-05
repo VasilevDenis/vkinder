@@ -24,10 +24,14 @@ class API:
         self._vk_request(method, params)
 
     def get_users(self) -> list:
-        pass
+        return [1, 2, 3]
 
-    def send_user_info(self) -> None:
-        pass
+    def send_user_info(self, user_id, user_info, received) -> None:
+        print(f'Sending user info to the chat! {user_id} {user_info}')
+        method = 'messages.send'
+        params = self._interface_params(f'https://vk.com/id{user_id}\n{user_info}',
+                                        self.start_keyboard(), received)
+        self._vk_request(method, params)
 
     @staticmethod
     def _interface_params(message, keyboard, received) -> dict:
@@ -63,7 +67,7 @@ class API:
         if 'city' in user_info:
             city = user_info['city']['title']
         else:
-            return None
+            return 'Город не указан'
         first_name = user_info['first_name']
         last_name = user_info['last_name']
         age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])

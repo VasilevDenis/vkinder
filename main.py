@@ -10,8 +10,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = constants.db_uri
 db.init_app(app)
 
 
-class User(db.Model):
-    __tablename__ = "users"
+class Viewed(db.Model):
+    __tablename__ = "viewed"
 
     vk_id = db.Column(db.Integer, primary_key=True)
     viewed_vk_id = db.Column(db.Integer, primary_key=True)
@@ -32,7 +32,7 @@ class AntiSimplicity(db.Model):
 
 @app.route('/', methods=['GET', 'POST'])
 def event() -> str:
-    new_handler = handler.Handler(request, app, db, User)
+    new_handler = handler.Handler(request, app, db, Viewed)
     new_handler.handle()
     return 'ok'
 
