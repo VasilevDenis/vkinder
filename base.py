@@ -6,7 +6,7 @@ class Base:
 
     def is_unrated_user_exists(self) -> bool:
         """
-        Checking for viewed user, who exist in the base, but not unrated. (like == None)
+        Checking for viewed user, who exist in the base, but not unrated (like == None).
         """
         if self.get_unrated_user():
             return True
@@ -26,20 +26,29 @@ class Base:
 
     def delete_unrated_user(self) -> None:
         """
-        Deletes record in the base, where viewed_user_id == None
+        Deletes record in the base, where viewed_user_id == None.
         """
 
     def add_user(self, user_id: int, unrated_user: int) -> None:
+        """
+        Add a new record to the base.
+        """
         viewed = self.viewed_class(vk_id=user_id, viewed_vk_id=unrated_user)
         self.db.session.add(viewed)
         self.db.session.commit()
 
     def rate(self, rate: bool) -> None:
+        """
+        Rates user. Sets field 'like' in the base == True or False
+        """
         self.db.session.execute(
             self.db.update(self.viewed_class).where(self.viewed_class.like is None).values(like=rate))
         self.db.session.commit()
 
     def get_favorites_users(self) -> list:
+        """
+        Returns favorites users.
+        """
         favorite_users = list(self.db.session.execute(
             self.db.select(self.viewed_class).where(self.viewed_class.like is True)))
         return favorite_users
