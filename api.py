@@ -11,19 +11,25 @@ class API:
         self.base_url = 'https://api.vk.com/method/'
         self.params = {"v": constants.API_VERSION, "access_token": constants.TOKEN}
 
-    def send_favorites_users(self, received, favorites_users) -> None:
+    def send_message(self, user_id, message):
+        method = 'messages.send'
+        params = self._interface_params(message,
+                                        self.start_keyboard(), user_id)
+        self._vk_request(method, params)
+
+    def send_favorites_users(self, user_id, favorites_users) -> None:
         method = 'messages.send'
         params = self._interface_params('Favorites!',
-                                        self.start_keyboard(), received)
+                                        self.start_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def wrong_command(self, received) -> None:
+    def wrong_command(self, user_id) -> None:
         method = 'messages.send'
         params = self._interface_params(f'Wrong command!',
-                                        self.like_dislike_favorites_keyboard(), received)
+                                        self.like_dislike_favorites_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def get_users(self, city, age, gender) -> list:
+    def get_users(self, city: str, age: str, gender: int) -> list:
         method = 'users.search'
         city = city
         age = age
@@ -42,37 +48,12 @@ class API:
             found_users_list.append(item['id'])
         return found_users_list
 
-    def send_user_info(self, user_id, user_info, received) -> None:
+    def send_user_info(self, user_id, user_info) -> None:
         print(f'Sending user info to the chat! {user_id} {user_info}')
         method = 'messages.send'
         params = self._interface_params(f'https://vk.com/id{user_id}\n{user_info}',
-                                        self.start_keyboard(), received)
+                                        self.start_keyboard(), user_id)
         self._vk_request(method, params)
-
-
-    @staticmethod
-    def _interface_params(message, keyboard, received) -> dict:
-        params = {'random_id': random.randint(100000, 999999),
-                  'message': message,
-                  'keyboard': keyboard,
-                  'user_id': received.from_id
-                  }
-        return params
-
-    @staticmethod
-    def like_dislike_favorites_keyboard() -> dict:
-        keyboard = VkKeyboard(one_time=False)
-        keyboard.add_button(label='Favorites', color=VkKeyboardColor.PRIMARY)
-        keyboard.add_line()
-        keyboard.add_button(label='Like', color=VkKeyboardColor.POSITIVE)
-        keyboard.add_button(label='Dislike', color=VkKeyboardColor.NEGATIVE)
-        return keyboard.get_keyboard()
-
-    @staticmethod
-    def start_keyboard() -> dict:
-        keyboard = VkKeyboard(one_time=False)
-        keyboard.add_button(label='Back', color=VkKeyboardColor.PRIMARY)
-        return keyboard.get_keyboard()
 
     def get_user_info(self, user_id: int) -> list or None:
         # по vk id выдает список: [имя, фамилия, возраст, пол, город]
@@ -89,8 +70,8 @@ class API:
         last_name = user_info['last_name']
         age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])
         gender = user_info['sex']
-        member_info = [first_name, last_name, age, gender, city]
-        return member_info
+        user_info = [first_name, last_name, age, gender, city]
+        return user_info
 
     def get_photos(self, user_id: int) -> None or dict:
         # по vk id выдает список с 3 фото размера Х с макс.кол-вом лайков
@@ -118,6 +99,30 @@ class API:
         request_obj = requests.get(url=url, params=self.params)
         time.sleep(0.3)
         return request_obj.json()
+
+    @staticmethod
+    def _interface_params(message, keyboard, user_id) -> dict:
+        params = {'random_id': random.randint(100000, 999999),
+                  'message': message,
+                  'keyboard': keyboard,
+                  'user_id': user_id
+                  }
+        return params
+
+    @staticmethod
+    def like_dislike_favorites_keyboard() -> dict:
+        keyboard = VkKeyboard(one_time=False)
+        keyboard.add_button(label='Favorites', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_line()
+        keyboard.add_button(label='Like', color=VkKeyboardColor.POSITIVE)
+        keyboard.add_button(label='Dislike', color=VkKeyboardColor.NEGATIVE)
+        return keyboard.get_keyboard()
+
+    @staticmethod
+    def start_keyboard() -> dict:
+        keyboard = VkKeyboard(one_time=False)
+        keyboard.add_button(label='Back', color=VkKeyboardColor.PRIMARY)
+        return keyboard.get_keyboard()
 
 
 
