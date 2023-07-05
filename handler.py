@@ -5,9 +5,9 @@ import receiver
 
 
 class Handler:
-    def __init__(self, request, app, db, user) -> None:
+    def __init__(self, request, app, db, Viewed) -> None:
         self.api = api.API()
-        self.base = base.Base(app, db, user)
+        self.base = base.Base(app, db, Viewed)
         received_json = request.get_json()
         self.received = receiver.Receiver(received_json)
 
@@ -29,13 +29,13 @@ class Handler:
         if self.base.is_unrated_user_exists():
             the_unrated_user = self.base.get_unrated_user()
             user_info = self.api.get_user_info(the_unrated_user)
-            if user_info is None:
-                self.base.delete_unrated_user()
-                ids_of_users = self.api.get_users()
-                ids_of_unrated_users = self.base.get_unrated_users(ids_of_users)
-                id_of_random_unrated_user = random.choice(ids_of_unrated_users)
-                self.base.add_user(self.received.from_id, id_of_random_unrated_user)
-                self.api.send_user_info()
+            self.api.send_user_info(self.received.from_id, user_info)
+        else:
+            ids_of_users = self.api.get_users()
+            id_of_random_unrated_user = random.choice(ids_of_users)
+            unrated_user_info = self.api.get_user_info(id_of_random_unrated_user)
+            self.base.add_user(self.received.from_id, id_of_random_unrated_user)
+            self.api.send_user_info(id_of_random_unrated_user, unrated_user_info, self.received)
 
     def like(self) -> None:
         self._rate(True)
