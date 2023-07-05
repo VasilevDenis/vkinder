@@ -25,16 +25,15 @@ class API:
 
     def get_users(self, city, age, gender) -> list:
         method = 'users.search'
-        self.city = city
-        self.age = age
-        self.gender = 3 - gender
+        city = city
+        age = age
+        gender = 3 - gender
         params = {
                 'access_token': constants.APP_TOKEN,
-                'v': 5.131,
-                'hometown': self.city,
-                'sex': self.gender,
-                'age_from': self.age,
-                'age_to': self.age
+                'hometown': city,
+                'sex': gender,
+                'age_from': age,
+                'age_to': age
             }
         r = self._vk_request(method, params)
         print(r['response']['count'])
