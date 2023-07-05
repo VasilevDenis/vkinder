@@ -23,8 +23,25 @@ class API:
                                         self.like_dislike_favorites_keyboard(), received)
         self._vk_request(method, params)
 
-    def get_users(self) -> list:
-        return [1, 2, 3]
+    def get_users(self, city, age, gender) -> list:
+        method = 'users.search'
+        self.city = city
+        self.age = age
+        self.gender = 3 - gender
+        params = {
+                'access_token': constants.APP_TOKEN,
+                'v': 5.131,
+                'hometown': self.city,
+                'sex': self.gender,
+                'age_from': self.age,
+                'age_to': self.age
+            }
+        r = self._vk_request(method, params)
+        print(r['response']['count'])
+        found_users_list = []
+        for item in r['response']['items']:
+            found_users_list.append(item['id'])
+        return found_users_list
 
     def send_user_info(self, user_id, user_info, received) -> None:
         print(f'Sending user info to the chat! {user_id} {user_info}')
@@ -32,6 +49,7 @@ class API:
         params = self._interface_params(f'https://vk.com/id{user_id}\n{user_info}',
                                         self.start_keyboard(), received)
         self._vk_request(method, params)
+
 
     @staticmethod
     def _interface_params(message, keyboard, received) -> dict:
