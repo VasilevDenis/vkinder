@@ -17,9 +17,10 @@ class API:
                                         self.start_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def send_favorites_users(self, user_id, favorites_users) -> None:
+    def send_favorites_contacts(self, user_id, favorites_contacts: list) -> None:
+        favorites_contacts = '\n'.join(favorites_contacts)
         method = 'messages.send'
-        params = self._interface_params('Favorites!',
+        params = self._interface_params(favorites_contacts,
                                         self.start_keyboard(), user_id)
         self._vk_request(method, params)
 
@@ -29,7 +30,7 @@ class API:
                                         self.like_dislike_favorites_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def get_users(self, city: str, age: str, gender: int) -> list:
+    def get_contacts(self, city: str, age: str, gender: int) -> list:
         method = 'users.search'
         city = city
         age = age
@@ -42,23 +43,46 @@ class API:
                 'age_to': age
             }
         r = self._vk_request(method, params)
-        print(r['response']['count'])
         found_users_list = []
         for item in r['response']['items']:
             found_users_list.append(item['id'])
         return found_users_list
 
-    def send_user_info(self, user_id, user_info) -> None:
-        print(f'Sending user info to the chat! {user_id} {user_info}')
+    def send_contact_info(self, user_id, contact_id) -> None:
+        contact_info = self.get_contact_info(contact_id)
+        photo_ids = self.get_photos(contact_id)
+        print(f'Sending user info to the chat! {user_id}')
         method = 'messages.send'
-        params = self._interface_params(f'https://vk.com/id{user_id}\n{user_info}',
-                                        self.start_keyboard(), user_id)
+        attachment = f'{photo_ids[0]},{photo_ids[1]},{photo_ids[2]}'
+        params = self._interface_params(f'{contact_info[0]} {contact_info[1]}\n'
+            f'https://vk.com/id{contact_id}', self.start_keyboard(), user_id, attachment)
+        params["access_token"] = constants.TOKEN
         self._vk_request(method, params)
 
-    def get_user_info(self, user_id: int) -> list or None:
+    def get_contact_info(self, contact_id: int) -> list or None:
+        # по vk id выдает список: [имя, фамилия, возраст, пол, город, vk id]
+        method = 'users.get'
+        params = {'user_id': contact_id,
+                  'fields': 'bdate, city, sex'}
+                  #'access_token': constants.APP_TOKEN}
+        r = self._vk_request(method, params)
+        contact_info = r['response'][0]
+        if 'city' in contact_info:
+            city = contact_info['city']['title']
+        else:
+            city = 'Город не указан'
+        first_name = contact_info['first_name']
+        last_name = contact_info['last_name']
+        age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])
+        gender = contact_info['sex']
+        contact_info = [first_name, last_name, age, gender, city]
+        return contact_info
+
+
+    def get_user_or_contact_info(self, user_or_contact_id: int) -> list or None:
         # по vk id выдает список: [имя, фамилия, возраст, пол, город]
         method = 'users.get'
-        params = {'user_id': user_id,
+        params = {'user_id': user_or_contact_id,
                   'fields': 'bdate, city, sex'}
         r = self._vk_request(method, params)
         user_info = r['response'][0]
@@ -73,10 +97,10 @@ class API:
         user_info = [first_name, last_name, age, gender, city]
         return user_info
 
-    def get_photos(self, user_id: int) -> None or dict:
+    def get_photos(self, contact_id: int) -> None or dict:
         # по vk id выдает список с 3 фото размера Х с макс.кол-вом лайков
         method = 'photos.get'
-        params = {'owner_id': user_id,
+        params = {'owner_id': contact_id,
                   'album_id': 'profile',
                   'extended': 1,
                   'access_token': constants.APP_TOKEN
@@ -90,7 +114,7 @@ class API:
                 if photo['type'] == 'x':
                     url = photo['url']
             photos[url] = likes
-        photos = dict(sorted(photos.items(), key=lambda item: item[1], reverse=True))
+        photos = dict(sorted(photos.items(), key=lambda elem: elem[1], reverse=True))
         return list(photos.keys())[:3]
 
     def _vk_request(self, method, params=None) -> dict:
