@@ -50,12 +50,19 @@ class API:
 
     def send_contact_info(self, user_id, contact_id) -> None:
         contact_info = self.get_contact_info(contact_id)
+        first_name_last_name = ' '.join(contact_info[:2])
         photo_ids = self.get_photos(contact_id)
         print(f'Sending user info to the chat! {user_id}')
         method = 'messages.send'
-        attachment = f'{photo_ids[0]},{photo_ids[1]},{photo_ids[2]}'
-        params = self._interface_params(f'{contact_info[0]} {contact_info[1]}\n'
-            f'https://vk.com/id{contact_id}', self.start_keyboard(), user_id, attachment)
+        photo_ids_string = '\n'.join(photo_ids)
+        attachment = dict()
+        attachment['type'] = 'photo'
+        attachment['type'] = 'photo'
+        attachment['owner_id'] = user_id
+        attachment['media_id'] = ''
+        params = self._interface_params(
+            f'https://vk.com/id{contact_id}\n{first_name_last_name}\n',
+            self.start_keyboard(), user_id, attachment)
         params["access_token"] = constants.TOKEN
         self._vk_request(method, params)
 
@@ -77,7 +84,6 @@ class API:
         gender = contact_info['sex']
         contact_info = [first_name, last_name, age, gender, city]
         return contact_info
-
 
     def get_user_or_contact_info(self, user_or_contact_id: int) -> list or None:
         # по vk id выдает список: [имя, фамилия, возраст, пол, город]
@@ -106,6 +112,7 @@ class API:
                   'access_token': constants.APP_TOKEN
                   }
         r = self._vk_request(method, params)
+        print(r)
         photos = {}
         for item in r['response']['items']:
             likes = item['likes']['count']
@@ -125,11 +132,12 @@ class API:
         return request_obj.json()
 
     @staticmethod
-    def _interface_params(message, keyboard, user_id) -> dict:
+    def _interface_params(message, keyboard, user_id, attachment) -> dict:
         params = {'random_id': random.randint(100000, 999999),
                   'message': message,
                   'keyboard': keyboard,
-                  'user_id': user_id
+                  'user_id': user_id,
+                  'attachment': attachment
                   }
         return params
 
