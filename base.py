@@ -1,56 +1,73 @@
 class Base:
-    def __init__(self, app, db, viewed_class) -> None:
+    def __init__(self, app, db, user_contact) -> None:
         self.app = app
         self.db = db
-        self.viewed_class = viewed_class
+        self.user_contact = user_contact
 
-    def is_unrated_user_exists(self) -> bool:
+    def is_unrated_contact_exists(self) -> bool:
         """
         Checking for viewed user, who exist in the base, but not unrated (like == None).
         """
-        if self.get_unrated_user():
+        if self.get_unrated_contact():
             return True
         else:
             return False
 
-    def get_unrated_user(self) -> int or None:
+    def get_unrated_contact(self) -> int or None:
         """
-        Returns unrated user vk_id.
+        Returns vk_id of unrated contact .
         """
-        unrated_user = list(self.db.session.execute(self.db.select(self.viewed_class)
-                                                    .where(self.viewed_class.like is None)))
-        if unrated_user:
-            return unrated_user[0]
-        else:
+        try:
+            unrated_contact = self.db.session.execute(
+                self.db.select(self.user_contact)
+                .filter_by(like='None')).scalar_one()
+            return unrated_contact.contact_id
+        except Exception:
             return None
 
-    def delete_unrated_user(self) -> None:
-        """
-        Deletes record in the base, where viewed_user_id == None.
-        """
-
-    def add_user(self, user_id: int, unrated_user: int) -> None:
+    def add_user_contact(self, user_id: int, contact_id: int) -> None:
         """
         Add a new record to the base.
         """
-        viewed = self.viewed_class(vk_id=user_id, viewed_vk_id=unrated_user)
-        self.db.session.add(viewed)
+        user_contact = self.user_contact(user_id=user_id, contact_id=contact_id, like='None')
+        self.db.session.add(user_contact)
         self.db.session.commit()
 
-    def rate(self, rate: bool) -> None:
+    def rate(self, contact_id, rate: bool) -> None:
         """
-        Rates user. Sets field 'like' in the base == True or False
+        Rates contact. Sets field 'like' in the base == True or False
         """
-        self.db.session.execute(
-            self.db.update(self.viewed_class).where(self.viewed_class.like is None).values(like=rate))
+        print(contact_id, 'contact_id')
+        if contact_id is None:
+            record = self.db.session.execute(
+                self.db.select(self.user_contact)
+                .filter_by(like='None')).scalar_one()
+        else:
+            record = self.db.session.execute(
+                self.db.select(self.user_contact)
+                .filter_by(like='None')).scalar_one()
+        record.like = rate
         self.db.session.commit()
 
-    def get_favorites_users(self) -> list:
+    def get_favorites_contacts(self, user_id: int) -> list or True:
         """
-        Returns favorites users.
+        Returns favorites contacts.
         """
-        favorite_users = list(self.db.session.execute(
-            self.db.select(self.viewed_class).where(self.viewed_class.like is True)))
-        return favorite_users
+        favorite_contacts = self.db.session.execute(
+            self.db.select(self.user_contact.contact_id)
+            .filter_by(user_id=user_id)
+            .filter_by(like='True')).scalars()
+        favorite_contacts = [f'https://vk.com/id{str(elem)}' for elem in favorite_contacts]
+        return favorite_contacts
+
+    def get_all_contacts_for_user_id(self, user_id):
+        """
+        Returns all viewed contacts for user_id.
+        """
+        all_contacts = self.db.session.execute(
+            self.db.select(self.user_contact.contact_id)
+            .filter_by(user_id=user_id)).scalars()
+        return all_contacts
+
 
 
