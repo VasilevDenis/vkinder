@@ -50,13 +50,16 @@ class API:
     def send_contact_info(self, user_id, contact_id) -> None:
         contact_info = self.get_contact_info(contact_id)
         photo_ids = self.get_photos(contact_id)
-        print(f'Sending user info to the chat! {user_id}')
-        method = 'messages.send'
-        attachment = f'{photo_ids[0]},{photo_ids[1]},{photo_ids[2]}'
-        params = self._interface_params(f'{contact_info[0]} {contact_info[1]}\n'
-            f'https://vk.com/id{contact_id}', self.start_keyboard(), user_id, attachment)
-        params["access_token"] = constants.TOKEN
-        self._vk_request(method, params)
+        if len(photo_ids) < 3:
+            return "No photo"
+        else:
+            print(f'Sending user info to the chat! {user_id}')
+            method = 'messages.send'
+            attachment = f'{photo_ids[0]},{photo_ids[1]},{photo_ids[2]}'
+            params = self._interface_params(f'{contact_info[0]} {contact_info[1]}\n'
+                f'https://vk.com/id{contact_id}', self.start_keyboard(), user_id, attachment)
+            params["access_token"] = constants.TOKEN
+            self._vk_request(method, params)
 
     def get_contact_info(self, contact_id: int) -> list or None:
         # по vk id выдает список: [имя, фамилия, возраст, пол, город, vk id]
@@ -128,6 +131,5 @@ class API:
 
 api = API()
 # print(api.get_contact_info(1))
-api.send_contact_info(788770602, 5449703)
-# print(api.get_users('Тула', 25, 2))
+api.send_contact_info(788770602, 788770602)
 
