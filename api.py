@@ -17,9 +17,10 @@ class API:
                                         self.start_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def send_favorites_users(self, user_id, favorites_users) -> None:
+    def send_favorites_contacts(self, user_id, favorites_contacts: list) -> None:
+        favorites_contacts = '\n'.join(favorites_contacts)
         method = 'messages.send'
-        params = self._interface_params('Favorites!',
+        params = self._interface_params(favorites_contacts,
                                         self.start_keyboard(), user_id)
         self._vk_request(method, params)
 
@@ -29,7 +30,7 @@ class API:
                                         self.like_dislike_favorites_keyboard(), user_id)
         self._vk_request(method, params)
 
-    def get_users(self, city: str, age: str, gender: int) -> list:
+    def get_contacts(self, city: str, age: str, gender: int) -> list:
         method = 'users.search'
         city = city
         age = age
@@ -87,10 +88,12 @@ class API:
         # по vk id выдает список с id 3 фото с макс.кол-вом лайков
         method = 'photos.getAll'
         params = {'owner_id': contact_id,
+
                   'extended': 1,
                   'access_token': constants.APP_TOKEN
                   }
         r = self._vk_request(method, params)
+        print(r)
         photos = {}
         if 'response' in r: 
             for item in r['response']['items']:
@@ -130,15 +133,4 @@ class API:
         keyboard = VkKeyboard(one_time=False)
         keyboard.add_button(label='Back', color=VkKeyboardColor.PRIMARY)
         return keyboard.get_keyboard()
-
-
-api = API()
-# print(api.get_contact_info(1))
-# for i in range (788770608, 788770706):
-
-#     print(api.send_contact_info(788770602, i), i)
-#     i += 1
-
-# print(api.send_contact_info(788770602, 788770678))
-# print(api.get_photos(788770678))
-api.send_contact_info(788770602, 788770678)
+      
