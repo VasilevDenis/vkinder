@@ -75,24 +75,27 @@ class API:
             city = 'Город не указан'
         first_name = contact_info['first_name']
         last_name = contact_info['last_name']
-        age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])
+        if 'bdate' in r['response'][0]:
+            age = int(datetime.now().year) - int(r['response'][0]['bdate'][-4:])
+        else:
+            age = None
         gender = contact_info['sex']
         contact_info = [first_name, last_name, age, gender, city]
         return contact_info
 
     def get_photos(self, contact_id: int) -> None or dict:
         # по vk id выдает список с id 3 фото с макс.кол-вом лайков
-        method = 'photos.get'
+        method = 'photos.getAll'
         params = {'owner_id': contact_id,
-                  'album_id': 'profile',
                   'extended': 1,
                   'access_token': constants.APP_TOKEN
                   }
         r = self._vk_request(method, params)
         photos = {}
-        for item in r['response']['items']:
-            likes = item['likes']['count']
-            photos[f"photo{contact_id}_{item['id']}"] = likes
+        if 'response' in r: 
+            for item in r['response']['items']:
+                likes = item['likes']['count']
+                photos[f"photo{contact_id}_{item['id']}"] = likes
         photos = dict(sorted(photos.items(), key=lambda item: item[1], reverse=True))
         return list(photos.keys())[:3]
 
@@ -131,5 +134,11 @@ class API:
 
 api = API()
 # print(api.get_contact_info(1))
-api.send_contact_info(788770602, 788770602)
+# for i in range (788770608, 788770706):
 
+#     print(api.send_contact_info(788770602, i), i)
+#     i += 1
+
+# print(api.send_contact_info(788770602, 788770678))
+# print(api.get_photos(788770678))
+api.send_contact_info(788770602, 788770678)
